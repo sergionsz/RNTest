@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Image, StyleSheet, Text, TouchableHighlight, View } from 'react-native';
+import MapView from 'react-native-maps';
 
 class Home extends Component {
   constructor(props) {
@@ -8,6 +9,7 @@ class Home extends Component {
     this._updateData = this._updateData.bind(this);
     this._getPhoto = this._getPhoto.bind(this);
     this._getCurrentPosition = this._getCurrentPosition.bind(this);
+    this._getMap = this._getMap.bind(this);
   }
   render() {
     return (
@@ -19,8 +21,29 @@ class Home extends Component {
         </TouchableHighlight>
         {this._getPhoto()}
         {this._getPosition()}
+        {this._getMap()}
       </View>
     )
+  }
+
+  _getMap() {
+    if (this.state.currentPosition !== '') {
+      return (<MapView
+        style={styles.photo}
+        region={{
+          latitude: this.state.currentPosition.coords.latitude,
+          longitude: this.state.currentPosition.coords.longitude,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        }} >
+        <MapView.Marker
+          coordinate={{
+            latitude: this.state.currentPosition.coords.latitude,
+            longitude: this.state.currentPosition.coords.longitude,
+          }}
+        />
+      </MapView>)
+    }
   }
 
   _getPosition() {
@@ -35,7 +58,6 @@ class Home extends Component {
   _getCurrentPosition() {
     navigator.geolocation.getCurrentPosition(
       location => {
-        console.log(location);
         this.setState({currentPosition: location});
       },
       err => this.setState({currentPosition: err}),
@@ -44,7 +66,6 @@ class Home extends Component {
   }
 
   _getPhoto() {
-    console.log('_getPhoto', this.state.path);
     if(this.state.path !== '') {
       return (<Image source={{uri: this.state.path}} style={styles.photo}/>);
     }

@@ -26,7 +26,6 @@ class TakePhoto extends Component {
   takePicture() {
     this.camera.capture()
       .then((data) => {
-        console.log(data);
         this._sendToHome(data);
       })
       .catch(err => console.error(err));
