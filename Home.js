@@ -33,8 +33,8 @@ class Home extends Component {
         region={{
           latitude: this.state.currentPosition.coords.latitude,
           longitude: this.state.currentPosition.coords.longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
+          latitudeDelta: 0.0222,
+          longitudeDelta: 0.0222,
         }} >
         <MapView.Marker
           coordinate={{
@@ -48,6 +48,7 @@ class Home extends Component {
 
   _getPosition() {
     if (this.state.currentPosition !== '') {
+      console.log(this.state);
       return (<View>
         <Text>Latitude: {this.state.currentPosition.coords.latitude}</Text>
         <Text>Longitude: {this.state.currentPosition.coords.longitude}</Text>
@@ -61,7 +62,7 @@ class Home extends Component {
         this.setState({currentPosition: location});
       },
       err => this.setState({currentPosition: err}),
-      {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000}
+      {enableHighAccuracy: false, timeout: 20000, maximumAge: 1000}
     );
   }
 
