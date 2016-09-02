@@ -1,99 +1,20 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Image, StyleSheet, Text, TouchableHighlight, View } from 'react-native';
-import MapView from 'react-native-maps';
+import { connect } from 'react-redux';
+import Map from './Map';
 
-class Home extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {path: '', currentPosition: ''};
-    this._updateData = this._updateData.bind(this);
-    this._getPhoto = this._getPhoto.bind(this);
-    this._getCurrentPosition = this._getCurrentPosition.bind(this);
-    this._getMap = this._getMap.bind(this);
-  }
-  render() {
-    return (
-      <View style={styles.container}>
-        <TouchableHighlight onPress={() => {
-            this._goTakePhoto();
-          }}>
-          <Text style={styles.welcome}>Take Photo</Text>
-        </TouchableHighlight>
-        {this._getPhoto()}
-        {this._getPosition()}
-        {this._getMap()}
-      </View>
-    )
-  }
-
-  _getMap() {
-    if (this.state.currentPosition !== '') {
-      return (<MapView
-        style={styles.photo}
-        region={{
-          latitude: this.state.currentPosition.coords.latitude,
-          longitude: this.state.currentPosition.coords.longitude,
-          latitudeDelta: 0.0222,
-          longitudeDelta: 0.0222,
-        }} >
-        <MapView.Marker
-          coordinate={{
-            latitude: this.state.currentPosition.coords.latitude,
-            longitude: this.state.currentPosition.coords.longitude,
-          }}
-        />
-      </MapView>)
-    }
-  }
-
-  _getPosition() {
-    if (this.state.currentPosition !== '') {
-      console.log(this.state);
-      return (<View>
-        <Text>Latitude: {this.state.currentPosition.coords.latitude}</Text>
-        <Text>Longitude: {this.state.currentPosition.coords.longitude}</Text>
-      </View>)
-    }
-  }
-
-  _getCurrentPosition() {
-    navigator.geolocation.getCurrentPosition(
-      location => {
-        this.setState({currentPosition: location});
-      },
-      err => this.setState({currentPosition: err}),
-      {enableHighAccuracy: false, timeout: 20000, maximumAge: 1000}
-    );
-  }
-
-  _getPhoto() {
-    if(this.state.path !== '') {
-      return (<Image source={{uri: this.state.path}} style={styles.photo}/>);
-    }
-  }
-
-  _goTakePhoto() {
-    this.props.navigator.push({
-      name: 'TakePhoto',
-      callback: this._updateData
-    });
-  }
-
-  _updateData(data) {
-    this.setState(data);
-    this._getCurrentPosition();
-  }
-
-}
-
+const backgroundColor = '#F5FCFF';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
+    backgroundColor,
   },
-  photo: {width: 200, height: 200},
+  photo: {
+    width: 200,
+    height: 200,
+  },
   welcome: {
     fontSize: 20,
     textAlign: 'center',
@@ -101,4 +22,95 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Home;
+/**
+ * Dispatches the action to update geoposition in the store
+ * @param  {function} dispatch function of redux that dispatches actions
+ */
+function updatePosition(dispatch) {
+  navigator.geolocation.getCurrentPosition(
+    location => {
+      dispatch({
+        type: 'UPDATE_POSITION',
+        position: location,
+      });
+    },
+    err => { throw Error(err); },
+    {
+      enableHighAccuracy: false,
+      timeout: 20000,
+      maximumAge: 1000,
+    }
+  );
+}
+
+/**
+ * Adds a new scene to navigator to take the photo
+ * Then, this dispatches an action to update the photo path in the store
+ * @param  {[type]} navigator [description]
+ * @param  {[type]} dispatch  [description]
+ * @return {[type]}           [description]
+ */
+function goTakePhoto(navigator, dispatch) {
+  navigator.push({
+    name: 'TakePhoto',
+    callback: (data) => dispatch({
+      type: 'UPDATE_PHOTO',
+      photoPath: data.path,
+    }),
+  });
+}
+
+const Home = ({ navigator, photo, currentPosition, dispatch }) => (
+  <View style={styles.container}>
+    <TouchableHighlight
+      onPress={() => {
+        updatePosition(dispatch);
+        goTakePhoto(navigator, dispatch);
+      }}
+    >
+      <Text style={styles.welcome}>Take Photo</Text>
+    </TouchableHighlight>
+    { photo !== '' ?
+      <Image source={{ uri: photo }} style={styles.photo} /> :
+      null
+    }
+    { {}.hasOwnProperty.call(currentPosition, 'coords') ?
+      (<View>
+        <Text>Latitude: {currentPosition.coords.latitude}</Text>
+        <Text>Longitude: {currentPosition.coords.longitude}</Text>
+        <Map coords={currentPosition.coords} />
+      </View>) :
+      null
+    }
+  </View>
+  );
+Home.propTypes = {
+  navigator: React.PropTypes.object,
+  dispatch: React.PropTypes.func,
+  photo: React.PropTypes.string,
+  currentPosition: React.PropTypes.object,
+};
+
+/**
+ * A function to use with react-redux's connect, this creates an association
+ * between props in Home and the state in the store
+ * @param  {[type]} state [description]
+ * @return {[type]}       [description]
+ */
+function mapStateToProps(state) {
+  return {
+    photo: state.photoPath,
+    currentPosition: state.currentPosition,
+  };
+}
+
+/**
+ * Wrapper component created from react-redux's connect method
+ * (See mapStateToProps)
+ * @type {[type]}
+ */
+const HomeWrapper = connect(
+  mapStateToProps
+)(Home);
+
+export default HomeWrapper;

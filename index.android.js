@@ -4,35 +4,39 @@
  * @flow
  */
 
-import React, { Component } from 'react';
+import React from 'react';
 import {
   AppRegistry,
   Navigator,
-  StyleSheet,
-  Text,
-  View
 } from 'react-native';
-
+import { createStore } from 'redux';
+import { Provider } from 'react-redux';
+import reducer from './reducer';
 import Home from './Home';
 import TakePhoto from './TakePhoto';
 
-class RNTest extends Component {
-  render() {
-    return (
-      <Navigator
-        initialRoute={{ name: 'Home' }}
-        renderScene={this.renderScene} />
-    );
-  }
-
-  renderScene(route, navigator) {
-    if (route.name === 'Home') {
+function renderScene(route, navigator) {
+  switch (route.name) {
+    case 'Home':
       return <Home navigator={navigator} />;
-    }
-    if (route.name === 'TakePhoto') {
-      return <TakePhoto navigator={navigator} route={route}/>;
-    }
+    case 'TakePhoto':
+      return <TakePhoto navigator={navigator} route={route} />;
+    default:
+      return null;
   }
 }
+
+const RNTest = () => (
+  /**
+   * Provider from react-redux makes it possible for all the application to have
+   * access to the store.
+   */
+  <Provider store={createStore(reducer)}>
+    <Navigator
+      initialRoute={{ name: 'Home' }}
+      renderScene={renderScene}
+    />
+  </Provider>
+);
 
 AppRegistry.registerComponent('RNTest', () => RNTest);
